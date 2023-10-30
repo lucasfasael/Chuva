@@ -1,3 +1,5 @@
+import 'package:chuva/models/activities_model.dart';
+import 'package:chuva/services/activities_service.dart';
 import 'package:chuva/widgets/activity_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +13,24 @@ class ListActivitiesPage extends StatefulWidget {
 }
 
 class _ListActivitiesPageState extends State<ListActivitiesPage> {
+  late ActivitiesService activitiesService;
+  ActivitiesModel? activitiesModel;
+  @override
+  void initState() {
+    activitiesService = ActivitiesService();
+    activitiesService.findAll().then(
+      (value) {
+        setState(
+          () {
+            activitiesModel = value;
+          },
+        );
+      },
+    );
+
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     var width = MediaQuery.of(context).size.width;
@@ -206,18 +226,11 @@ class _ListActivitiesPageState extends State<ListActivitiesPage> {
               ),
               SizedBox(
                 width: width * 0.95,
-                height: height * 0.75,
+                height: height * 0.70,
                 child: ListView(
-                  children: const [
-                    ActivityWidget(),
-                    ActivityWidget(),
-                    ActivityWidget(),
-                    ActivityWidget(),
-                    ActivityWidget(),
-                    ActivityWidget(),
-                    ActivityWidget(),
-                    ActivityWidget(),
-                  ],
+                  children: (activitiesModel?.data ?? [])
+                      .map((e) => ActivityWidget(datum: e))
+                      .toList(),
                 ),
               )
             ],

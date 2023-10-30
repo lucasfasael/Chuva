@@ -1,14 +1,22 @@
+import 'package:chuva/models/datum.dart';
+import 'package:chuva/utils/utils_data.dart';
+import 'package:chuva/utils/utils_html.dart';
+import 'package:chuva/views/profile_person_page.dart';
 import 'package:chuva/widgets/person_widget.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
-class Details extends StatefulWidget {
-  const Details({super.key});
+class ActivitiesPage extends StatefulWidget {
+  final Datum datum;
+  const ActivitiesPage({super.key, required this.datum});
 
   @override
-  State<Details> createState() => _DetailsState();
+  State<ActivitiesPage> createState() => _ActivitiesPageState();
 }
 
-class _DetailsState extends State<Details> {
+class _ActivitiesPageState extends State<ActivitiesPage> {
+  List<PersonWidget> minhaLista = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,12 +36,12 @@ class _DetailsState extends State<Details> {
             Container(
               height: 35,
               width: MediaQuery.of(context).size.width,
-              color: const Color(0xFFC24FFE),
-              child: const Padding(
-                padding: EdgeInsets.all(8.0),
+              color: widget.datum.category?.color?.fixColor(),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  "Astrofísica e Cosmologia",
-                  style: TextStyle(
+                  widget.datum.category?.title?.ptBr ?? "",
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
                   ),
@@ -46,36 +54,42 @@ class _DetailsState extends State<Details> {
                 height: 160,
                 child: Column(
                   children: [
-                    const Flexible(
+                    Flexible(
                       child: Text(
-                        "A Física dos Buracos Negros Supermassivos ",
-                        style: TextStyle(
+                        widget.datum.title?.ptBr ?? "",
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 20,
                         ),
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
                           Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.alarm_rounded,
                                 color: Color(0xFF306DC3),
                               ),
-                              Text("Domingo 07:00h - 08:00h")
+                              Text(
+                                  "${widget.datum.start.getDayOfWeek()} ${widget.datum.start?.toHHmm()}h - ${widget.datum.end?.toHHmm()}")
                             ],
                           ),
                           Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.location_on,
                                 color: Color(0xFF306DC3),
                               ),
-                              Text("Maputo")
+                              Text(widget.datum.locations
+                                      ?.map((e) => e.title?.ptBr)
+                                      .join(", ") ??
+                                  "")
                             ],
                           ),
                         ],
@@ -112,38 +126,52 @@ class _DetailsState extends State<Details> {
                 ),
               ),
             ),
-            const Column(
+            Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Flexible(
-                    child: Text(
-                        "A física dos buracos negros supermassivos explora fenômenos intensos e enigmáticos no universo. Esses objetos astronômicos, com milhões a bilhões de vezes a massa do Sol, influenciam fortemente sua vizinhança cósmica, afetando a evolução das galáxias, e desafiando nossos entendimento sobre gravidade e a natureza do espaço-tempo."),
-                  ),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                      widget.datum.description?.ptBr.htmlCorrector() ?? ""),
                 ),
                 Padding(
-                  padding: EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
-                          "Palestrante",
-                          style: TextStyle(
+                          (widget.datum.people ?? [])
+                                  .firstOrNull
+                                  ?.role
+                                  ?.label
+                                  ?.ptBr
+                                  ?.toString() ??
+                              "",
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                       Column(
-                        children: [
-                          PersonWidget(),
-                          PersonWidget(),
-                          PersonWidget(),
-                          PersonWidget(),
-                          PersonWidget(),
-                        ],
+                        children: widget.datum.people!
+                            .map((e) => PersonWidget(
+                                  img: e.picture,
+                                  name: e.name,
+                                  university: e.institution,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ProfilePersonPage(
+                                          person: e,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ))
+                            .toList(),
                       ),
                     ],
                   ),

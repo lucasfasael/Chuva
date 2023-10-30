@@ -1,19 +1,40 @@
+import 'package:chuva/models/datum.dart';
+import 'package:chuva/models/person.dart';
+import 'package:chuva/services/activities_service.dart';
+import 'package:chuva/utils/utils_data.dart';
+import 'package:chuva/utils/utils_html.dart';
 import 'package:chuva/widgets/activity_widget.dart';
 import 'package:flutter/material.dart';
 
 class ProfilePersonPage extends StatefulWidget {
-  const ProfilePersonPage({super.key, required this.title});
-
-  final String title;
+  final Person person;
+  const ProfilePersonPage({super.key, required this.person});
 
   @override
   State<ProfilePersonPage> createState() => _ProfilePersonPageState();
 }
 
 class _ProfilePersonPageState extends State<ProfilePersonPage> {
+  late ActivitiesService activitiesService;
+  List<Datum> listDatuns = [];
+  @override
+  void initState() {
+    activitiesService = ActivitiesService();
+    activitiesService.findAllByIdPerson(widget.person.id ?? 0).then(
+      (value) {
+        setState(
+          () {
+            listDatuns = value;
+          },
+        );
+      },
+    );
+
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    var width = MediaQuery.of(context).size.width;
     var height = MediaQuery.of(context).size.height;
 
     return Scaffold(
@@ -34,18 +55,27 @@ class _ProfilePersonPageState extends State<ProfilePersonPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: SizedBox(
                       height: 100,
                       width: 100,
-                      child: CircleAvatar(
-                        backgroundImage: NetworkImage(
-                          "https://static.todamateria.com.br/upload/st/ep/stepheazul.jpg",
-                        ),
-                      ),
+                      child: widget.person.picture != null
+                          ? CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                widget.person.picture!,
+                              ),
+                            )
+                          : CircleAvatar(
+                              child: Text(
+                                widget.person.name.getInitials(),
+                                style: const TextStyle(
+                                  fontSize: 50,
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                   Column(
@@ -53,16 +83,16 @@ class _ProfilePersonPageState extends State<ProfilePersonPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Stephen William Hawking",
-                        style: TextStyle(
+                        widget.person.name ?? "",
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(
-                        "Universidade de Cambridge",
-                        style: TextStyle(
+                        widget.person.institution ?? "",
+                        style: const TextStyle(
                           overflow: TextOverflow.ellipsis,
                           fontSize: 16,
                         ),
@@ -73,37 +103,26 @@ class _ProfilePersonPageState extends State<ProfilePersonPage> {
               ),
               SizedBox(
                 height: height * 0.25,
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
+                    const Text(
                       "Bio",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      "<p>Doutor em cosmologia, foi professor lucasiano emérito por Isaac Newton, Paul DIrac e Charles Babbage. Foi, pouco antes de falecer, diretor de pesquisa do Departamento de Matemática Aplicada e Física Teórica (CTC) da Universidade de Cambridge</p>",
+                      widget.person.bio?.ptBr.htmlCorrector() ?? "",
                     ),
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const ActivityWidget()),
-                    );
-                  });
-                },
-                child: const Text(
-                  "Atividades",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+              const Text(
+                "Atividades",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const Padding(
@@ -115,13 +134,9 @@ class _ProfilePersonPageState extends State<ProfilePersonPage> {
                   ),
                 ),
               ),
-              const Column(
-                children: [
-                  ActivityWidget(),
-                  ActivityWidget(),
-                  ActivityWidget(),
-                ],
-              )
+              Column(
+                  children:
+                      listDatuns.map((e) => ActivityWidget(datum: e)).toList())
             ],
           ),
         ),
